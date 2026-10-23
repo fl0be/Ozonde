@@ -147,6 +147,7 @@ SYM = {
     # The two that move a build's memory. Watched, not stubbed: what they cost
     # is read on the way past and the allocation still happens.
     "alloc_tracked":  "romfs::AllocateTracked(ams::mitm::fs::romfs::AllocationType, unsigned long)",
+    "alloc_tracked_impl": "romfs::AllocateTrackedImpl(ams::mitm::fs::romfs::AllocationType, unsigned long)",
     "free_tracked":   "romfs::FreeTracked(ams::mitm::fs::romfs::AllocationType, void*, unsigned long)",
 }
 
@@ -529,10 +530,10 @@ class Harness:
         # where the bytes came from. Optional: a build whose allocator is not
         # named this way is measured by the pools alone.
         try:
-            self.allocations = alloc_types.Tally(
-                alloc_types.kind_names(guest.elf_path))
-            self.allocations.watch(
-                guest, guest.find_one(self.symbol("alloc_tracked")))
+            self.allocations = alloc_types.Tally(alloc_types.kind_names(guest.elf_path))
+            keys = ("alloc_tracked", "alloc_tracked_impl")
+            alloc = next(self.symbol(k) for k in keys if guest.find(self.symbol(k)))
+            self.allocations.watch(guest, guest.find_one(alloc))
         except Exception:
             self.allocations = None
 
